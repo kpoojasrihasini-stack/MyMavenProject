@@ -1,46 +1,46 @@
 package com.portfolioproject.model;
 
-public class Stock 
-            {
-			private String stockid;
-			private String stockname;
-			private double Price;
-			public Stock(String stockid, String stockname, double Price)
-			{
-				this.stockid=stockid;
-				this.stockname=stockname;
-				this.Price=Price;
-			}
+public class Stock extends Asset {
 
-			public String getStockid() {
-				return stockid;
-			}
+    private double currentPrice;
 
-			public void setStockid(String stockid) {
-				this.stockid = stockid;
-			}
+    // Constructor
+    public Stock(String assetId,
+                 String assetName,
+                 double purchasePrice,
+                 double currentPrice) {
 
-			public String getStockname() {
-				return stockname;
-			}
+        super(assetId, assetName, purchasePrice);
 
-			public void setStockname(String stockname) {
-				this.stockname = stockname;
-			}
+        this.currentPrice = currentPrice;
+    }
 
-			public double getPrice() {
-				return Price;
-			}
+    // Method overriding
+    @Override
+    public double calculateCurrentValue() {
 
-			public void setPrice(double price) {
-				this.Price = price;
-			}
-			public void display() {
-				System.out.println("Stock ID:" + stockid);
-				System.out.println("Stock Name:" + stockname);
-				System.out.println(" Price:" + Price);
-			}
-		}
-	
+        return currentPrice;
+    }
 
+    // Getter
+    public double getCurrentPrice() {
+        return currentPrice;
+    }
 
+    // Setter
+    public void setCurrentPrice(double currentPrice) {
+
+        this.currentPrice = currentPrice;
+    }
+
+    @Override
+    public String toString() {
+
+        return "Stock{" +
+                "Asset ID='" + getAssetId() + '\'' +
+                ", Asset Name='" + getAssetName() + '\'' +
+                ", Purchase Price=" + getPurchasePrice() +
+                ", Current Price=" + currentPrice +
+                '}';
+    }
+}
