@@ -35,6 +35,24 @@ public class User {
         System.out.println("Email: " + email);
         System.out.println("Number of Holdings: " + holdings.size());
     }
+    public void displayHoldings() {
+
+        System.out.println("User ID: " + userid);
+        System.out.println("User Name: " + name);
+
+        if (holdings.isEmpty()) {
+            System.out.println("No holdings available.");
+            return;
+        }
+
+        System.out.println("Holdings:");
+
+        for (Holding holding : holdings)
+        {
+            System.out.println(holding);
+        }
+    }
+    
 
     // Getters and Setters
 
@@ -69,4 +87,5 @@ public class User {
     public void setHoldings(List<Holding> holdings) {
         this.holdings = holdings;
     }
+    
 }
