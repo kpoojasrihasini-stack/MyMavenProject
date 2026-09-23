@@ -5,14 +5,14 @@ import com.portfolioproject.model.Stock;
 import com.portfolioproject.model.MutualFund;
 import com.portfolioproject.model.Holding;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 
 public class Main {
 
     // Store all users
-    static List<User> users = new ArrayList<>();
+    static Map<String, User> users = new HashMap<>();
 
     public static void main(String[] args) {
 
@@ -59,8 +59,8 @@ public class Main {
 
                     User newUser = new User(userid, name, email);
 
-                    // Add user to users list
-                    users.add(newUser);
+                    // Add user to HashMap
+                    users.put(userid, newUser);
 
                     System.out.println("User created successfully!");
 
@@ -208,7 +208,7 @@ public class Main {
 
                         System.out.println("\n--- User Details ---");
 
-                        for (User user : users) {
+                        for (User user : users.values()) {
 
                             user.display();
 
@@ -233,7 +233,7 @@ public class Main {
 
                     System.out.println("\n--- Holdings ---");
 
-                    for (User user : users) {
+                    for (User user : users.values()) {
 
                         System.out.println("\nUser ID: " + user.getUserid());
                         System.out.println("User Name: " + user.getName());
@@ -284,16 +284,8 @@ public class Main {
     // =========================================
     // FIND USER BY USER ID
     // =========================================
-    public static User findUser(String userid) {
-
-        for (User user : users) {
-
-            if (user.getUserid().equals(userid)) {
-
-                return user;
-            }
-        }
-
-        return null;
-    }
+     public static User findUser(String userid) 
+     {
+    	 return users.get(userid);
+     }
 }
