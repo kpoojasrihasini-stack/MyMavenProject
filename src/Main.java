@@ -2,18 +2,30 @@ package com.portfolioproject.app;
 
 import com.portfolioproject.model.User;
 
+
+
+
+import com.portfolioproject.concurrent.PriceUpdateTask;
+import com.portfolioproject.model.Asset;
+import com.portfolioproject.model.Holding;
 import com.portfolioproject.model.Stock;
 import com.portfolioproject.model.MutualFund;
-import com.portfolioproject.model.Holding;
 import com.portfolioproject.service.PortfolioService;
 import com.portfolioproject.util.JsonUtil;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import com.portfolioproject.util.JVMInfo;
+import com.portfolioproject.exception.UserNotFoundException;
+import com.portfolioproject.exception.InvalidStockException;
+import java.util.InputMismatchException;
 
 import java.util.Scanner;
 import java.util.Comparator;
 
 public class Main {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws UserNotFoundException {
 
         Scanner sc = new Scanner(System.in);
 
@@ -36,7 +48,9 @@ public class Main {
             System.out.println("6. Sort Holdings");
             System.out.println("7. Save Data");
             System.out.println("8. Load Data");
-            System.out.println("9. Exit");
+            System.out.println("9. Update Stock Prices Concurrently");
+            System.out.println("10. JVM Information");
+            System.out.println("11. Exit");
             System.out.println("----------------------------");
 
             System.out.print("Enter your choice: ");
@@ -91,7 +105,15 @@ public class Main {
                     String stockUserId = sc.nextLine();
 
                     // Get user from HashMap through service
-                    User stockUser = portfolioService.getUser(stockUserId);
+                   // User stockUser = portfolioService.getUser(stockUserId);
+                    User stockUser = null;
+
+                    try {
+                        stockUser = portfolioService.getUser(stockUserId);
+                    } catch (UserNotFoundException e) {
+                        System.out.println(e.getMessage());
+                        break;
+                    }
 
                     if (stockUser == null) {
 
@@ -147,23 +169,24 @@ public class Main {
                 // =========================================
                 // CASE 3: ADD MUTUAL FUND HOLDING
                 // =========================================
-
+           
+                   
                 case 3:
 
                     System.out.println("\n--- Add Mutual Fund Holding ---");
-
                     System.out.print("Enter User ID: ");
                     String mfUserId = sc.nextLine();
-
                     // Get user from HashMap through service
-                    User mfUser = portfolioService.getUser(mfUserId);
-
-                    if (mfUser == null) {
-
-                        System.out.println("User not found.");
+                    User mfUser = null;
+                    try 
+                    {
+                        mfUser = portfolioService.getUser(mfUserId);
+                    } catch (UserNotFoundException e) 
+                    {
+                        System.out.println(e.getMessage());
                         break;
                     }
-
+                 //  Read holding details
                     System.out.print("Enter Holding ID: ");
                     String mfHoldingId = sc.nextLine();
 
@@ -172,7 +195,7 @@ public class Main {
 
                     System.out.print("Enter Mutual Fund Name: ");
                     String mfName = sc.nextLine();
-
+                 
                     System.out.print("Enter Purchase Price: ");
                     double mfPurchasePrice = sc.nextDouble();
 
@@ -184,31 +207,85 @@ public class Main {
 
                     sc.nextLine();
 
+                    // Validate quantity, purchase price and NAV
+                    boolean valid = true;
+
+                       try
+                        {
+                        portfolioService.validateStock( mfQuantity, mfPurchasePrice);
+                        if (nav <= 0)
+                        {
+                            throw new InvalidStockException("NAV must be greater than zero.");
+                        }
+                        } 
+                       catch (InvalidStockException e)
+                        {
+                        System.out.println("Validation Error: " + e.getMessage());
+                        valid = false;
+                        } 
+                       finally 
+                       {
+                        System.out.println("Mutual fund validation completed.");
+                       }
+                      // Stop if validation fails
+                       if (!valid)
+                       {
+                        break;
+                       }
+                   //  Read numeric values safely
+//                    // Declare variables
+//                    double mfPurchasePrice;
+//                    double nav;
+//                    int mfQuantity;
+//
+//                    // Read numeric inputs safely
+//                    try {
+//                        System.out.print("Enter Purchase Price: ");
+//                        mfPurchasePrice = sc.nextDouble();
+//
+//                        System.out.print("Enter NAV: ");
+//                        nav = sc.nextDouble();
+//
+//                        System.out.print("Enter Quantity: ");
+//                        mfQuantity = sc.nextInt();
+//
+//                        sc.nextLine();
+//
+//                    } catch (InputMismatchException e) {
+//
+//                        System.out.println(
+//                            "Invalid input! Enter numbers for price and NAV, "
+//                            + "and a whole number for quantity."
+//                        );
+//
+//                        sc.nextLine(); // Clear invalid input
+//                        break;
+//                    }
+//                   
+
                     // Create MutualFund object
                     MutualFund mutualFund = new MutualFund(
-                            mfId,
-                            mfName,
-                            mfPurchasePrice,
-                            nav
+                        mfId,
+                        mfName,
+                        mfPurchasePrice,
+                        nav
                     );
 
                     // Create Holding object
                     Holding mfHolding = new Holding(
-                            mfHoldingId,
-                            mutualFund,
-                            mfQuantity
+                        mfHoldingId,
+                        mutualFund,
+                        mfQuantity
                     );
 
                     // Add holding to user
                     mfUser.addHolding(mfHolding);
 
                     System.out.println(
-                            "Mutual fund holding added successfully!"
+                        "Mutual fund holding added successfully!"
                     );
-
                     break;
-
-
+               
                 // =========================================
                 // CASE 4: DISPLAY USER
                 // =========================================
@@ -381,9 +458,110 @@ public class Main {
 
                     break;
                  // =========================================
-                 // CASE 9: Exit
+                 // CASE 9: Update Stock Prices Concurrently
+                 // =========================================
+
+//                 case 9:
+//                     System.out.println("\n--- Update Stock Prices Concurrently ---");
+//
+//                     break;
+                    // =========================================
+                   // CASE 9: Update Stock Prices Concurrently
+                   // =========================================
+                    
+//                case 9: 
+//                {
+//                    System.out.println("\n--- Update Stock Prices Concurrently ---");
+//                    for (User user : portfolioService.getAllUsers()) 
+//                    {
+//                        for (Holding holding : user.getHoldings())
+//                        {
+//                            Asset asset = holding.getAsset();
+//                            if (asset instanceof Stock)
+//                            {
+//                                Stock stockForUpdate = (Stock) asset;
+//                                PriceUpdateTask task =new PriceUpdateTask(stockForUpdate);
+//                                Thread thread = new Thread(task);
+//                                thread.start();
+//                            }
+//                        }
+//                    }
+//
+//                    break;
+//                }
+                 // =========================================
+                 // CASE 9: Update Stock Prices Concurrently
                  // =========================================
                 case 9:
+                {
+                    System.out.println("\n--- Update Stock Prices Concurrently ---");
+                    ExecutorService executor = Executors.newFixedThreadPool(4);
+                    for (User user : portfolioService.getAllUsers())
+                    {
+                        for (Holding holding : user.getHoldings())
+                        {
+                            Asset asset = holding.getAsset();
+                            if (asset instanceof Stock)
+                            {
+                                Stock stockForUpdate = (Stock) asset;
+                                PriceUpdateTask task =new PriceUpdateTask(stockForUpdate);
+                                Future<Double> future = executor.submit(task);
+                                System.out.println("Task submitted for: "
+                                        + stockForUpdate.getAssetName());
+                            }
+                        }
+                    }
+                    executor.shutdown();
+                    break;
+                }
+                
+                //If we got race condtion overcome it using syncronization method
+//                case 9:
+//                {
+//                    System.out.println("\n--- Race Condition Demonstration ---");
+//                    ExecutorService executor =Executors.newFixedThreadPool(2);
+//                    Stock stockForUpdate = null;
+//                    // Find the first stock
+//                    for (User user : portfolioService.getAllUsers())
+//                    {
+//                        for (Holding holding : user.getHoldings())
+//                        {
+//                            Asset asset = holding.getAsset();
+//                            if (asset instanceof Stock)
+//                            {
+//                                stockForUpdate = (Stock) asset;
+//                                break;
+//                            }
+//                        }
+//                        if (stockForUpdate != null)
+//                        {
+//                            break;
+//                        }
+//                    }
+//                    if (stockForUpdate != null)
+//                    {
+//                        System.out.println("Stock: "+ stockForUpdate.getAssetName());
+//                        System.out.println("Initial Price: "+ stockForUpdate.getCurrentPrice());
+//                        PriceUpdateTask task1 =new PriceUpdateTask(stockForUpdate);
+//                        PriceUpdateTask task2 =new PriceUpdateTask(stockForUpdate);
+//                        executor.submit(task1);
+//                        executor.submit(task2);
+//                        executor.shutdown();
+//                    }
+//
+//                    break;
+//                }
+                 // =========================================
+                 // CASE 10: JVM Info
+                 // =========================================
+                
+                case 10:
+                    JVMInfo.displayJVMInfo();
+                    break;
+                 // =========================================
+                    // CASE 11: Exit
+                    // =========================================
+                case 11:
 
                     System.out.println(
                             "\nThank you for using " +
@@ -400,11 +578,11 @@ public class Main {
                 default:
 
                     System.out.println(
-                            "Invalid choice. Please enter 1 to 7."
+                            "Invalid choice. Please enter 1 to 9."
                     );
             }
 
-        } while (choice != 9);
+        } while (choice != 10);
 
         sc.close();
     }
